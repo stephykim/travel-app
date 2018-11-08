@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">TravelApp</string>
+    <string name="fields_cannot_be_empty">Please enter a location!</string>
+</resources>
