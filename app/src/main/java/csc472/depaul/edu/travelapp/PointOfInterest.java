@@ -58,10 +58,10 @@ public final class PointOfInterest implements Parcelable{
     String getFormattedAddress() { return formattedAddress; }
     void setFormattedAddress(String formattedAddress) { this.formattedAddress = formattedAddress; }
 
-    String getLatitude() { return latitude; }
+    double getLatitude() { return Double.parseDouble(latitude); }
     void setLatitude(String latitude) { this.latitude = latitude; }
 
-    String getLongitude() { return longitude; }
+    double getLongitude() { return Double.parseDouble(longitude); }
     void setLongitude(String longitude) { this.longitude = longitude; }
 
     String getName() { return name; }

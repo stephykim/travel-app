@@ -1,10 +1,13 @@
 package csc472.depaul.edu.travelapp;
 
 import android.content.Intent;
-import android.net.Network;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.os.AsyncTask;
+import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -12,16 +15,22 @@ import android.widget.ProgressBar;
 import android.widget.Button;
 import android.widget.Toast;
 
+import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
 
     private ProgressBar searchingProgressBar;
+    private String search;
+    SharedPreference sharedPreference;
+    ArrayList<String> savedList =new ArrayList<>();
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        sharedPreference = new SharedPreference();
         setContentView(R.layout.activity_main);
 
         searchingProgressBar = (ProgressBar) findViewById(R.id.pb_loading);
@@ -31,16 +40,31 @@ public class MainActivity extends AppCompatActivity {
         if (search != null) {
             search.setOnClickListener(onClickSearch);
         }
+
+        RecyclerView rv = (RecyclerView) findViewById(R.id.recyclerView);
+        rv.setHasFixedSize(true);
+        rv.setLayoutManager(new LinearLayoutManager(this));
+        DividerItemDecoration divider = new DividerItemDecoration(this, DividerItemDecoration.VERTICAL);
+        divider.setDrawable(ContextCompat.getDrawable(this, R.drawable.divider));
+        rv.addItemDecoration(divider );
+
+        File f = new File("/data/data/" + getPackageName() + "/shared_prefs/" + "POI_KEYS.xml");
+        if (f.exists()){
+            savedList = sharedPreference.getFavoritesKeys(MainActivity.this);
+        }
+
+        RecyclerView.Adapter mAdapter = new MyAdapter(savedList);
+        rv.setAdapter(mAdapter);
+
     }
 
     private View.OnClickListener onClickSearch = new View.OnClickListener () {
         @Override
         public void onClick(View v) {
             if (validateEditTextField(R.id.searchTxt)) {
-                String search = getEditViewText(R.id.searchTxt);
-                search = removeSpaceStrings(search);
-                Log.v("Main Activity", search);
-                new getActivitiesInfo().execute(search);
+                search = getEditViewText(R.id.searchTxt);
+                String searchText = removeSpaceStrings(search);
+                new getActivitiesInfo().execute(searchText);
             }
         }
     };
@@ -56,15 +80,12 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected ArrayList<PointOfInterest> doInBackground(String... params) {
-
-            Log.v("Doing it in background", "BACKGROUND");
             if (params.length == 0) {
                 return null;
             }
 
             //should be paris for tests
             String location = params[0];
-            Log.v("MainActivity", location);
             URL pointsOfInterestURL = NetworkUtils.buildUrl_PointsOfInterest(location);
 
             try {
@@ -91,14 +112,11 @@ public class MainActivity extends AppCompatActivity {
             searchingProgressBar.setVisibility(View.INVISIBLE);
             if (poiList != null) {
 
-
                 Intent displayResultsActivity = new Intent(getNewUserActivity(), DisplayPoiActivity.class);
 
                 displayResultsActivity.putExtra("poiList", poiList);
+                displayResultsActivity.putExtra("poiSearch", search);
                 startActivity(displayResultsActivity);
-            }
-            else {
-
             }
         }
     }

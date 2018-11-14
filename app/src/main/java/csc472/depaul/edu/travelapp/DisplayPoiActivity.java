@@ -1,8 +1,7 @@
 package csc472.depaul.edu.travelapp;
 
 
-import android.graphics.Point;
-import android.net.Uri;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -13,76 +12,102 @@ import android.widget.Button;
 import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import java.io.IOException;
-
+import android.util.Log;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.net.URL;
 import android.graphics.BitmapFactory;
 
-public class DisplayPoiActivity extends AppCompatActivity {
+public class DisplayPoiActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private PointOfInterest poi;
+    private String poiSearch;
     private ArrayList<PointOfInterest> poiList;
-    ImageView iView = null;
-    private ArrayList<PointOfInterest> poiYes;
+    private ArrayList<PointOfInterest> poiYes = new ArrayList<>();
+    private TextView poiLoc;
+    private TextView poiName;
+    private ImageView poiImg;
+    SharedPreference sharedPreference;
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         Log.v("Rotation", "THREAD_ONSAVE");
         super.onSaveInstanceState(outState);
-        outState.putParcelable("currentPoi", poi);
-
+        outState.putParcelableArrayList("currentPoiList", poiList);
+        outState.putParcelableArrayList("currentYesPoiList", poiYes);
+        outState.putString("poiSearch", poiSearch);
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Log.v("onCreate", "THREAD_INITIALLY_CREATED");
         super.onCreate(savedInstanceState);
-
+        sharedPreference = new SharedPreference();
         setContentView(R.layout.activity_display_poi);
 
         if (savedInstanceState != null) {
             Log.v("Rotation", "ROTATION");
-            // poiList = savedInstanceState.getParcelable("currentInvestment");
+            poiList = savedInstanceState.getParcelableArrayList("currentPoiList");
+            poiYes = savedInstanceState.getParcelableArrayList("currentYesPoiList");
+            poiSearch = savedInstanceState.getString("poiSearch");
 
         } else {
             Bundle data = getIntent().getExtras();
             poiList = data.getParcelableArrayList("poiList");
+            poiSearch = data.getString("poiSearch");
         }
 
 
-        TextView  locTv = findViewById(R.id.place_location);
-        TextView descTv = findViewById(R.id.place_description);
+        /*final TextView  locTv = findViewById(R.id.place_location);
+        final TextView descTv = findViewById(R.id.place_description);
+        final ImageView picTv = findViewById(R.id.place_image);*/
+        poiLoc = findViewById(R.id.place_location);
+        poiName = findViewById(R.id.place_description);
+        poiImg = findViewById(R.id.place_image);
         Button no = (Button) findViewById(R.id.no_button);
         Button yes = (Button) findViewById(R.id.yes_button);
-
         PointOfInterest p = poiList.get(0);
-        new ImageDownloadTask((ImageView) findViewById(R.id.place_image)).execute(p.photoUrl);
-
-        locTv.setText(p.getFormattedAddress());
-        descTv.setText(p.getName());
-
-        /*for(final PointOfInterest p : poiList) {
+        if (p.photoRef != null) {
             new ImageDownloadTask((ImageView) findViewById(R.id.place_image)).execute(p.photoUrl);
+        }
+        else {
+            poiImg.setImageResource(R.drawable.no_image_icon);
+        }
+        poiLoc.setText(p.getFormattedAddress());
+        poiName.setText(p.getName());
 
-            locTv.setText(p.getFormattedAddress());
-            descTv.setText(p.getName());
+        no.setOnClickListener(this);
+        yes.setOnClickListener(this);
+    }
 
-            no.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    return;
+    @Override
+    public void onClick(View v) {
+        int clicked = v.getId();
+        if (clicked == R.id.yes_button) {
+            poiYes.add(poiList.get(0));
+        }
+        poiList.remove(0);
+
+        if (poiList.isEmpty()) {
+            sharedPreference.saveFavorites(DisplayPoiActivity.this, poiSearch, poiYes);
+            sharedPreference.saveFavoritesKey(DisplayPoiActivity.this, poiSearch);
+
+            Intent goBackMainActivity = new Intent(getNewUserActivity(), MainActivity.class);
+            startActivity(goBackMainActivity);
+        }
+        else {
+            PointOfInterest p = poiList.get(0);
+            Log.v("POI", p.name);
+            if (p != null) {
+                if (p.photoRef != null) {
+                    new ImageDownloadTask((ImageView) findViewById(R.id.place_image)).execute(p.photoUrl);
                 }
-            });
-            yes.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    poiYes.add(p);
-                    return;
+                else {
+                    poiImg.setImageResource(R.drawable.no_image_icon);
                 }
-            });
-        }*/
+                poiLoc.setText(p.getFormattedAddress());
+                poiName.setText(p.getName());
+            }
+        }
     }
 
     private Bitmap downloadImage(String stringUrl) throws IOException{
@@ -126,5 +151,10 @@ public class DisplayPoiActivity extends AppCompatActivity {
         protected void onPostExecute(Bitmap result) {
             bitmapIV.setImageBitmap(result);
         }
+    }
+
+    private final DisplayPoiActivity getNewUserActivity()
+    {
+        return this;
     }
 }

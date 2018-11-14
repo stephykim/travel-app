@@ -33,12 +33,11 @@ public final class NetworkUtils {
         URL url = null;
         try {
             url = new URL(uriBuilder.toString().replaceAll("%2B", "+"));
-            url = new URL(uriBuilder.toString());
+            //url = new URL(uriBuilder.toString());
         } catch (MalformedURLException e) {
             e.printStackTrace();
         }
 
-        Log.v(TAG, "Built URI " + url);
 
         return url;
     }

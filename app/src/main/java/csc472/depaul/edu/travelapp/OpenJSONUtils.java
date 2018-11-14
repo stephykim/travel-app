@@ -11,7 +11,6 @@ import java.util.*;
 public class OpenJSONUtils {
     public static ArrayList<PointOfInterest> getPointsOfInterests(Context context, String pointsOfInterestResponse) throws JSONException {
         final String OWM_MESSAGE_CODE = "cod";
-        Log.v("pointsOfInterestResponse", pointsOfInterestResponse);
         JSONObject pointsOfInterestJSON = new JSONObject(pointsOfInterestResponse);
         if (pointsOfInterestJSON.has(OWM_MESSAGE_CODE)) {
             int errorCode = pointsOfInterestJSON.getInt(OWM_MESSAGE_CODE);
@@ -39,9 +38,14 @@ public class OpenJSONUtils {
             poi.latitude = locationJSON.getString("lat");
             poi.longitude = locationJSON.getString("lng");
 
-            JSONArray photosArrayJSON = poiJSON.getJSONArray("photos");
-            JSONObject photosJSON = photosArrayJSON.getJSONObject(0);
-            poi.photoRef = photosJSON.getString("photo_reference");
+            try {
+                JSONArray photosArrayJSON = poiJSON.getJSONArray("photos");
+                JSONObject photosJSON = photosArrayJSON.getJSONObject(0);
+                poi.photoRef = photosJSON.getString("photo_reference");
+            } catch (JSONException e){
+                poi.photoRef = null;
+            }
+
             poiList.add(poi);
         }
 
